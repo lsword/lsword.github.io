@@ -1,0 +1,12 @@
+---
+layout: default
+title: 刘剑的博客
+description: 刘剑的技术博客, 云计算技术、IOS开发、Linux...
+---
+
+<div class="well">
+    <span>文章总计： {{ site.posts | size }} 篇</span>
+    <span class="pull-right">最后更新时间：{{ site.time | date: "%Y年%m月%d日" }}</span>
+</div>
+
+{% include ds_recent.html %}

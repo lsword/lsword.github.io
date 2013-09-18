@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="本文对warden容器的核心进程wshd进行介绍。" />
+    <meta name="author" content="唐久军">
+    
+    <link rel="shortcut icon" href="/assets/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/blog.css">
+    <script type="text/javascript" src="/assets/js/blog.js"></script>
+
+    <title>Warden容器的核心进程wshd</title>
+
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-39325120-3']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+      </script>
+
+  </head>
+
+  <body>
+<div class="nav nav-fix-top">
+    <div class="navbar-panel">
+        <div class="brand">
+            <a href="/" class="light">刘剑的博客</a>
+        </div>
+
+        <div class="catalog pull-right">
+            <ul>
+                <li><a href="/categories.html">分类</a></li>
+                <li><a href="/tags.html">标签</a></li>
+                <li><a href="/projects.html">项目</a></li>
+                <li><a href="/archives.html">归档</a></li>
+                <li><a href="/about_me.html">关于我</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 防止 IE6、7 中定位元素导致相邻元素 margin-top 失效 -->
+<div style="height: 0px"></div>
+  <div class="well well-header">
+      <ul>
+          <li  class="badge badge-info badge-large pull-right">
+            <a href="/categories.html?#anchor云计算">分类：云计算</a></li>
+      </ul>
+      <ul>
+        
+          <li  class="badge badge-inverse pull-right">
+              <a href="/tags.html?#anchorCloudFoundry">CloudFoundry</a>
+          </li>
+        
+          <li  class="badge badge-inverse pull-right">
+              <a href="/tags.html?#anchor容器">容器</a>
+          </li>
+        
+          <li  class="badge badge-inverse pull-right">
+              <a href="/tags.html?#anchor虚拟化">虚拟化</a>
+          </li>
+        
+      </ul>
+
+      <a class="time-backgroud"></a>
+      <span class="time-meta">2013年09月19日</span>
+      <h1>Warden容器的核心进程wshd</h1>
+      <hr>
+      <p>本文对warden容器的核心进程wshd进行介绍。</p>
+  </div>
+
+  <div class="well">
+    <h3>术语</h3>
+
+<ol>
+<li>warden主机：运行warden的主机，其上可以运行多个warden容器。</li>
+<li>warden容器：运行在warden主机上的虚拟主机，CloudFoundry的每个应用实例就运行在一个warden容器中。</li>
+<li>应用实例：运行在warden容器中的一个应用。</li>
+</ol>
+
+<h3>初始化</h3>
+
+<ol>
+<li>分配一个wshd_t结构，用于与子进程之间传递数据。</li>
+<li>读取参数
+
+<ul>
+<li>run_path: server socket文件路径</li>
+<li>lib_path: hook脚本文件路径</li>
+<li>root_path: 新根目录路径</li>
+</ul></li>
+<li>初始化域socket。</li>
+<li>建立用于与子进程之间通信的管道。</li>
+<li>解除与父进程之间对于mount name-space的共享。</li>
+<li>执行hook-parent-before-clone.sh脚本。</li>
+<li>clone子进程(CLONE_NEWIPC、CLONE_NEWNET、CLONE_NEWNS、CLONE_NEWPID、CLONE_NEWUTS)。</li>
+<li>将子进程的PID写入环境变量。</li>
+<li>执行hook-parent-after-clone.sh脚本。
+
+<ul>
+<li>配置容器的cgroup</li>
+<li>将pid写入pid文件</li>
+<li>设置虚拟网卡</li>
+</ul></li>
+<li>通知clone出的子进程开始运行。</li>
+<li>等待子进程的通知。</li>
+<li>退出。</li>
+</ol>
+
+<h3>服务</h3>
+
+  </div>
+
+  <!-- 底部导航条 -->
+  <div class="nav nav-fix-bottom"  id="nav-fix-bottom">
+      <div class="navbar-panel">
+          <div id="page-nav-list" class="catalog pull-left"></div>
+      </div>
+  </div>
+
+  <link rel="stylesheet" type="text/css" href="/assets/css/monokai.min.css">
+  <script type="text/javascript" src="/assets/js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+
+<!-- Baidu Button BEGIN -->
+<script type="text/javascript" id="bdshare_js" data="type=slide&amp;img=5&amp;mini=1&amp;pos=left&amp;uid=6635097" ></script>
+<script type="text/javascript" id="bdshell_js"></script>
+<script type="text/javascript">
+document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + Math.ceil(new Date()/3600000);
+</script>
+<!-- Baidu Button END -->
+    <div class="footer">
+      &copy; 2013 刘剑 - Crafted with 
+        <a href="http://tangjiujun.github.io"><strong>Tangjiujun</strong></a> | 
+        <a href="http://jekyllrb.com/"><strong>Jekyll</strong></a>, Hosted on 
+        <strong><a href="https://github.com/">GitHub</a></strong>
+        | 转载请遵守 <a href="http://creativecommons.org/licenses/by-sa/3.0/cn/">CC BY-SA 3.0</a> 协议
+        <span class="pull-right">
+          <strong>
+            <a href="https://github.com/lsword">Fork me on GitHub </a>
+          </strong>
+        </span>
+    </div>
+  </body>
+</html>
