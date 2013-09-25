@@ -53,10 +53,10 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   8. 将子进程的PID写入环境变量。
   9. 执行hook-parent-after-clone.sh脚本。
+  
     9.1 配置容器的cgroup
     
-    	~~~
-    	
+      	
 		for system_path in /tmp/warden/cgroup/*
 		do
 		  instance_path=$system_path/instance-$id
@@ -91,18 +91,14 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		    echo $PID > $instance_path/tasks
 		done
 		
-		可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
-    	~~~
+        可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
+
 
     9.2 将pid写入pid文件
 
-		~~~
 		echo $PID > ./run/wshd.pid
-		~~~
 
     9.3 设置虚拟网络
-
-		~~~
 		
 		ip link add name $network_host_iface type veth peer name 		$network_container_iface
 		ip link set $network_host_iface netns 1
@@ -110,7 +106,6 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
 		ifconfig $network_host_iface $network_host_ip netmask $network_netmask
 		
-		~~~
 
 		* 建立一对veth设备，名字分别是 $network_host_iface 和 $network_container_iface。这两个设备是完全对称的，从其中一个发出消息就会从另一个收到。（veth的作用就是要把从一个network namespace发出的数据包转发到另一个network namespace。veth 设备是成对的，一个是container中，另一个在真实机器上。）
 		* 把设备$network_host_iface放到主机的网络命名空间中。
@@ -137,78 +132,56 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   1. 等待父进程的通知，接收到父进程通知后继续执行。
   2. 执行hook-child-before-pivot.sh脚本。
   
-    ```
 	  目前没有实际功能。
-    ```
 
   3. pivot_root(".", "mnt");
   
-    ```
 	  把当前进程的文件系统目录移到容器目录中的mnt目录，把当前进程的根文件系统设置为容器目录。移除对之前根文件系统的依赖。
-    ```
 
   4. 执行hook-child-after-pivot.sh脚本。
 
     4.1 准备伪终端
 
-		```
 		mkdir -p /dev/pts
 		mount -t devpts -o newinstance,ptmxmode=0666 devpts /dev/pts
 		ln -sf pts/ptmx /dev/ptmx
-		```
 
     4.2 准备proc
 
-		```
 		mkdir -p /proc
 		mount -t proc none /proc
-		```
 
     4.3 设置主机名
 
-		```
 		hostname $id
-		```
 
     4.4 配置网卡和路由
 
-		```
 		ifconfig lo 127.0.0.1
 		ifconfig $network_container_iface $network_container_ip netmask $network_netmask mtu $container_iface_mtu
 		route add default gw $network_host_ip $network_container_iface
-		```
 
   5. execl("/sbin/wshd", "/sbin/wshd", "--continue", NULL);
 
   6. child_load_from_shm
   
-	```
   	读取父进程放在共享内存中的wshd_t结构。
-	```
 
   7. mount_umount_pivoted_root
 
-	```
-	  umount原来的根文件系统。
-	```
+  	umount原来的根文件系统。
 
   8. setsid
   
-	```
   	退出原来的进程组，成为一个daemon。
-	```
 
   9. 通知父进程退出。
   
-	```
 	barrier_signal(&w->barrier_child);
-	```
 
   10. 进入主循环，等待wsh发出的请求。
   
-	```
   	child_loop(w);
-	```
 
 ### 服务
 
