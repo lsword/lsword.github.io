@@ -53,7 +53,7 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   8. 将子进程的PID写入环境变量。
   9. 执行hook-parent-after-clone.sh脚本。
-    > 配置容器的cgroup
+    * 配置容器的cgroup
     
     	~~~
     	
@@ -93,15 +93,15 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		
     	~~~
     	
-    	可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
+        可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
     	
-    > 将pid写入pid文件
+    * 将pid写入pid文件
 	
 		~~~
 		echo $PID > ./run/wshd.pid
 		~~~
 	
-    > 设置虚拟网络
+    * 设置虚拟网络
 
 		~~~
 		
@@ -117,6 +117,7 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		* 把设备$network_host_iface放到主机的网络命名空间中。
 		* 把设备$network_container_iface放到容器的网络命名空间中。
 		* 在主机上增加$network_host_iface设备。
+
 
   10. 通知clone出的子进程开始运行。
   
