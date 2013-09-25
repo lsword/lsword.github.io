@@ -163,23 +163,23 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   5. execl("/sbin/wshd", "/sbin/wshd", "--continue", NULL);
 
-  6. child_load_from_shm
+    5.1 child_load_from_shm
   
 		读取父进程放在共享内存中的wshd_t结构。
 
-  7. mount_umount_pivoted_root
+    5.2 mount_umount_pivoted_root
 
 		umount原来的根文件系统。
 
-  8. setsid
+    5.3 setsid
   
 		退出原来的进程组，成为一个daemon。
 
-  9. 通知父进程退出。
+    5.4 通知父进程退出。
   
 		barrier_signal(&w->barrier_child);
 
-  10. 进入主循环，等待wsh发出的请求。
+    5.5 进入主循环，等待wsh发出的请求。
   
 		child_loop(w);
 
