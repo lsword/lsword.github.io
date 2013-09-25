@@ -165,15 +165,15 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   6. child_load_from_shm
   
-  	读取父进程放在共享内存中的wshd_t结构。
+	读取父进程放在共享内存中的wshd_t结构。
 
   7. mount_umount_pivoted_root
 
-  	umount原来的根文件系统。
+	umount原来的根文件系统。
 
   8. setsid
   
-  	退出原来的进程组，成为一个daemon。
+	退出原来的进程组，成为一个daemon。
 
   9. 通知父进程退出。
   
@@ -181,7 +181,7 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   10. 进入主循环，等待wsh发出的请求。
   
-  	child_loop(w);
+	child_loop(w);
 
 ### 服务
 
