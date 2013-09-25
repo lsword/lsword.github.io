@@ -36,9 +36,21 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   7. clone子进程(CLONE_NEWIPC、CLONE_NEWNET、CLONE_NEWNS、CLONE_NEWPID、CLONE_NEWUTS)。
   
   ~~~
-  
+	/* Point to top of stack (it grows down) */
+	stack = stack + pagesize;
+
+	/* Setup namespaces */
+	flags |= CLONE_NEWIPC;
+	flags |= CLONE_NEWNET;
+	flags |= CLONE_NEWNS;
+	flags |= CLONE_NEWPID;
+	flags |= CLONE_NEWUTS;
+
+	pid = clone(child_run, stack, flags, w);  
   ~~~
   
+  此处涉及到Linux中的namespaces技术，请参考[Linux中的namespaces]
+
   8. 将子进程的PID写入环境变量。
   9. 执行hook-parent-after-clone.sh脚本。
     * 配置容器的cgroup
@@ -105,4 +117,4 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
 
 	
-[Warden容器的网络配置]: http://lsword.github.io/2013/09/17.html
+[Linux中的namespaces]: http://lsword.github.io/2013/09/20.html
