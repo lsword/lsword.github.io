@@ -149,7 +149,7 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   
   4. 执行hook-child-after-pivot.sh脚本。
   
-  	* 准备伪终端
+    * 准备伪终端
 
 		~~~
 		mkdir -p /dev/pts
@@ -157,20 +157,20 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		ln -sf pts/ptmx /dev/ptmx
 		~~~
 
-  	* 准备proc
+    * 准备proc
 
 		~~~
 		mkdir -p /proc
 		mount -t proc none /proc
 		~~~
 
-  	* 设置主机名
+    * 设置主机名
 
 		~~~
 		hostname $id
 		~~~
   	
-  	* 配置网卡和路由
+    * 配置网卡和路由
 
 		~~~
 		ifconfig lo 127.0.0.1
