@@ -132,11 +132,11 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   1. 等待父进程的通知，接收到父进程通知后继续执行。
   2. 执行hook-child-before-pivot.sh脚本。
   
-	  目前没有实际功能。
+		目前没有实际功能。
 
   3. pivot_root(".", "mnt");
   
-	  把当前进程的文件系统目录移到容器目录中的mnt目录，把当前进程的根文件系统设置为容器目录。移除对之前根文件系统的依赖。
+		把当前进程的文件系统目录移到容器目录中的mnt目录，把当前进程的根文件系统设置为容器目录。移除对之前根文件系统的依赖。
 
   4. 执行hook-child-after-pivot.sh脚本。
 
@@ -165,23 +165,23 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
   6. child_load_from_shm
   
-	读取父进程放在共享内存中的wshd_t结构。
+		读取父进程放在共享内存中的wshd_t结构。
 
   7. mount_umount_pivoted_root
 
-	umount原来的根文件系统。
+		umount原来的根文件系统。
 
   8. setsid
   
-	退出原来的进程组，成为一个daemon。
+		退出原来的进程组，成为一个daemon。
 
   9. 通知父进程退出。
   
-	barrier_signal(&w->barrier_child);
+		barrier_signal(&w->barrier_child);
 
   10. 进入主循环，等待wsh发出的请求。
   
-	child_loop(w);
+		child_loop(w);
 
 ### 服务
 
