@@ -54,8 +54,70 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   8. 将子进程的PID写入环境变量。
   9. 执行hook-parent-after-clone.sh脚本。
     * 配置容器的cgroup
+    
+    	~~~
+    	
+		for system_path in /tmp/warden/cgroup/*
+		do
+		  instance_path=$system_path/instance-$id
+
+		  mkdir -p $instance_path
+
+		  if [ $(basename $system_path) == "cpuset" ]
+		  then
+		    cat $system_path/cpuset.cpus > $instance_path/cpuset.cpus
+		    cat $system_path/cpuset.mems > $instance_path/cpuset.mems
+		  fi
+
+		  if [ $(basename $system_path) == "devices" ]
+		  then
+		    # disallow everything, allow explicitly
+		    echo a > $instance_path/devices.deny
+ 		   # /dev/null
+		    echo "c 1:3 rw" > $instance_path/devices.allow
+		    # /dev/zero
+		    echo "c 1:5 rw" > $instance_path/devices.allow
+		    # /dev/random
+		    echo "c 1:8 rw" > $instance_path/devices.allow
+		    # /dev/urandom
+		    echo "c 1:9 rw" > $instance_path/devices.allow
+		    # /dev/tty
+		    echo "c 5:0 rw" > $instance_path/devices.allow
+		    # /dev/ptmx
+		    echo "c 5:2 rw" > $instance_path/devices.allow
+		    # /dev/pts/*
+		    echo "c 136:* rw" > $instance_path/devices.allow
+		  fi
+		    echo $PID > $instance_path/tasks
+		done
+		
+    	~~~
+    	
+    	可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
+    	
 	* 将pid写入pid文件
-	* 设置虚拟网卡
+	
+		~~~
+		echo $PID > ./run/wshd.pid
+		~~~
+	
+	* 设置虚拟网络
+
+		~~~
+		
+		ip link add name $network_host_iface type veth peer name 		$network_container_iface
+		ip link set $network_host_iface netns 1
+		ip link set $network_container_iface netns $PID
+
+		ifconfig $network_host_iface $network_host_ip netmask $network_netmask
+		
+		~~~
+	
+		* 建立一对veth设备，名字分别是 $network_host_iface 和 $network_container_iface。这两个设备是完全对称的，从其中一个发出消息就会从另一个收到。（veth的作用就是要把从一个network namespace发出的数据包转发到另一个network namespace。veth 设备是成对的，一个是container中，另一个在真实机器上。）
+		* 把设备$network_host_iface放到主机的网络命名空间中。
+		* 把设备$network_container_iface放到容器的网络命名空间中。
+		* 在主机上增加$network_host_iface设备。
+
   10. 通知clone出的子进程开始运行。
   
   ~~~
