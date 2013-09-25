@@ -91,9 +91,8 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		    echo $PID > $instance_path/tasks
 		done
 		
+		可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
     	~~~
-    	
-        可以看到，此时只设置cgroup中的cpuset和devices。其他部分设置是容器初始化成功后，dea控制warden进行设置的。
     	
     * 将pid写入pid文件
 	
