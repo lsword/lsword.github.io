@@ -110,7 +110,7 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		* 建立一对veth设备，名字分别是 $network_host_iface 和 $network_container_iface。这两个设备是完全对称的，从其中一个发出消息就会从另一个收到。（veth的作用就是要把从一个network namespace发出的数据包转发到另一个network namespace。veth 设备是成对的，一个是container中，另一个在真实机器上。）
 		* 把设备$network_host_iface放到主机的网络命名空间中。
 		* 把设备$network_container_iface放到容器的网络命名空间中。
-		* 在主机上增加$network_host_iface设备。
+		* 设置$network_host_iface设备的IP地址。
 
 
   10. 通知clone出的子进程开始运行。
@@ -161,6 +161,10 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 		ifconfig $network_container_iface $network_container_ip netmask $network_netmask mtu $container_iface_mtu
 		route add default gw $network_host_ip $network_container_iface
 
+		* 设置容器中的环回设备。
+		* 设置容器中$network_container_iface设备的IP地址。
+		* 配置容器路由。
+		
   5. execl("/sbin/wshd", "/sbin/wshd", "--continue", NULL);
 
     5.1 child_load_from_shm
