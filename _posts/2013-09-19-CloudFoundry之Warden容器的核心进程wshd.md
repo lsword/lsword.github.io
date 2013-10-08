@@ -10,6 +10,38 @@ description: 本文对warden容器的核心进程wshd进行介绍。
   2. warden容器：运行在warden主机上的虚拟主机，CloudFoundry的每个应用实例就运行在一个warden容器中。
   3. 应用实例：运行在warden容器中的一个应用。
 
+### 关键数据结构
+
+#### wshd_t
+	struct wshd_s {
+		/* Path to directory where server socket is placed */
+		char run_path[256]; //server socket的保存路径
+
+		/* Path to directory containing hooks */
+		char lib_path[256]; //钩子脚本的路径
+
+		/* Path to directory that will become root in the new mount namespace */
+		char root_path[256]; //新的挂载命名空间的根目录路径
+
+		/* Process title */
+		char title[32]; //进程标题
+
+		/* File descriptor of listening socket */
+		int fd; //监听的域socket的文件描述符
+
+		barrier_t barrier_parent;
+		barrier_t barrier_child;
+
+		/* Map pids to exit status fds */
+		//保存每个子进程的pid和用于与发出创建子进程请求的客户端进行通信的管道写端文件描述符。
+		struct {
+			pid_t pid;
+			int fd;
+		} *pid_to_fd;
+		size_t pid_to_fd_len;
+	};
+
+
 ### 初始化
 
 #### 父进程(wshd->parent_run)
@@ -189,6 +221,71 @@ description: 本文对warden容器的核心进程wshd进行介绍。
 
 ### 服务
 
+wshd进程初始化完成后，进入到child_loop函数。这个函数主要处理两方面工作：
+
+#### 等待处理外部的请求
+  
+    等待处理外部的请求分为两种：
+
+	* 交互式：用户通过可执行程序wsh与wshd进行交互。
+	* 非交互式：DEA通过向warden服务器发送指令与wshd进行交互。
+	
+    对于这两种请求方式，wshd分别使用child_handle_interactive和child_handle_noninteractive函数进行处理。这两个函数都会调用child_fork函数来处理请求。
+
+	
+##### child_fork(请求消息, in, out, err)
+
+这个函数的主要目的就是fork出子进程，执行请求消息中的命令。
+
+  1. fork出子进程。
+  2. 通过dup2函数，将子进程的标准输入、标准输出、标准错误输出分别设置为传入参数中的in、out、err文件描述符。
+  3. 调用setsid使子进程在一个单独的会话中运行。
+  4. 设置登陆用户，默认为root。
+  5. 使用getpwnam函数获取用户的登陆相关信息（密码、用户id、组id、真实名称、home目录、shell程序等）。
+  6. 如果输入来自控制终端，则通过ioctl打开控制终端。
+  7. 从请求消息中读取命令参数。
+  8. 从请求消息中读取rlimit信息并进行设置。
+  9. 从请求消息中读取用户用户的gid和uid并进行设置。
+  10. 设置环境变量。
+  11. 使用execvpe函数执行请求指令。
+
+
+##### 交互式
+
+  1. 初始化一个管道用于进程间通信。
+  2. 初始化一个伪终端。
+  3. 将管道的读端文件描述符和伪终端的master文件描述符发给请求方（wsh进程）。
+  4. child_fork(请求消息，伪终端的slave文件描述符，伪终端的slave文件描述符，伪终端的slave文件描述符)
+  5. 将child_fork返回的pid和用于通信的管道写端文件描述符记入wshd_t结构中。
+  
+
+##### 非交互式
+
+  1. 初始化4个管道。管道1用于标准输入、管道2用于标准输出、管道3用于标准错误输出、管道4用于进程间通信。
+  2. 将管道1的写描述符、管道2的读描述符、管道3的读描述符、管道4的读描述符发送给请求方（wsh进程）。
+  3. child_fork(请求消息，管道1的读描述符，管道2的写描述符，管道3的写描述符)
+  4. 将child_fork返回的pid和用于通信的管道(管道4)写端文件描述符记入wshd_t结构中。
+	
+#### 等待处理子进程的信号
+
+wshd进入主循环后，调用child_signalfd函数来设置处理子进程的SIGCHLD信号。
+
+如果接收到子进程的SIGCHLD信号，则调用child_handle_sigchld函数来进行响应处理。
+
+##### child_signalfd
+
+  1. 清空信号集。
+  2. 设置接收子进程的SIGCHLD信号。
+  3. 通过signalfd系统调用返回一个文件描述符，外部函数可以通过检测这个文件描述符来判断是否有收到子进程退出信号。
+  
+  
+##### child_handle_sigchld
+
+  1. 调用waitpid函数等待子进程结束并获取子进程退出信息。
+  2. 删除wshd_t结构中的pid和fd信息。
+  3. 如果子进程正常结束，则将子进程的退出信息通过管道发送给客户端(wsh)。
+  4. 如果子进程非正常结束，则不对客户端(wsh)进行通知(?)。
+  5. 关闭与客户端(wsh)之间的管道。
 
 	
 [Linux中的namespaces]: http://lsword.github.io/2013/09/20.html
