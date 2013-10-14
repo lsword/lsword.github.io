@@ -167,6 +167,205 @@ description: 一个warden容器会涉及到一系列的进程，本文对warden�
 
 ### warden容器的进程间通信
 	
+#### 进程打开文件情况
+	
+通过进程打开的文件描述符可以了解一些进程间通信情况，在此分别查看一下iomux-spawn、iomux-link、oom、wshd、wsh等进程的相应情况。	主要查看类型为FIFO和unix的文件描述符。
+
+iomux-spawn进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15282
+	COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF    NODE NAME
+	iomux-spa 15282 root  cwd    DIR                8,1     4096  156481 /home/paas/build_dir/target/warden_2fd4fcd33.git/warden
+	iomux-spa 15282 root  rtd    DIR                8,1     4096       2 /
+	iomux-spa 15282 root  txt    REG                8,1    62561  158449 /home/paas/warden/container/178l4d6v637/bin/iomux-spawn
+	iomux-spa 15282 root  mem    REG                8,1  1811128  795078 /lib/x86_64-linux-gnu/libc-2.15.so
+	iomux-spa 15282 root  mem    REG                8,1   135366  795080 /lib/x86_64-linux-gnu/libpthread-2.15.so
+	iomux-spa 15282 root  mem    REG                8,1   149280  795092 /lib/x86_64-linux-gnu/ld-2.15.so
+	iomux-spa 15282 root    0r  FIFO                0,8      0t0 1698219 pipe
+	iomux-spa 15282 root    1w  FIFO                0,8      0t0 1698220 pipe
+	iomux-spa 15282 root    2w  FIFO                0,8      0t0 1698221 pipe
+	iomux-spa 15282 root    3u  unix 0xffff88003a7bf400      0t0 1698241 /home/paas/warden/container/178l4d6v637/jobs/6/stdout.sock
+	iomux-spa 15282 root    4u  unix 0xffff88003a7bea40      0t0 1698242 /home/paas/warden/container/178l4d6v637/jobs/6/stderr.sock
+	iomux-spa 15282 root    5u  unix 0xffff88003a7bc000      0t0 1698243 /home/paas/warden/container/178l4d6v637/jobs/6/status.sock
+	iomux-spa 15282 root    6r  FIFO                0,8      0t0 1698244 pipe
+	iomux-spa 15282 root    7r  FIFO                0,8      0t0 1698247 pipe
+	iomux-spa 15282 root    8r  FIFO                0,8      0t0 1698245 pipe
+	iomux-spa 15282 root    9w  FIFO                0,8      0t0 1698247 pipe
+	iomux-spa 15282 root   10r  FIFO                0,8      0t0 1698246 pipe
+	iomux-spa 15282 root   11w  FIFO                0,8      0t0 1698246 pipe
+	iomux-spa 15282 root   12r  FIFO                0,8      0t0 1698248 pipe
+	iomux-spa 15282 root   13w  FIFO                0,8      0t0 1698248 pipe
+	iomux-spa 15282 root   14r  FIFO                0,8      0t0 1698249 pipe
+	iomux-spa 15282 root   15w  FIFO                0,8      0t0 1698249 pipe
+	iomux-spa 15282 root   16r  FIFO                0,8      0t0 1698250 pipe
+	iomux-spa 15282 root   17w  FIFO                0,8      0t0 1698250 pipe
+	iomux-spa 15282 root   18r  FIFO                0,8      0t0 1698251 pipe
+	iomux-spa 15282 root   19w  FIFO                0,8      0t0 1698251 pipe
+	iomux-spa 15282 root   20u  unix 0xffff8800237b1040      0t0 1698275 /home/paas/warden/container/178l4d6v637/jobs/6/stdout.sock
+	iomux-spa 15282 root   21u  unix 0xffff88003d691040      0t0 1698277 /home/paas/warden/container/178l4d6v637/jobs/6/stderr.sock
+	iomux-spa 15282 root   22u  unix 0xffff88003d693a80      0t0 1698279 /home/paas/warden/container/178l4d6v637/jobs/6/status.sock
+
+
+iomux-link进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15289
+	COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF    NODE NAME
+	iomux-lin 15289 root  cwd    DIR                8,1     4096  156481 /home/paas/build_dir/target/warden_2fd4fcd33.git/warden
+	iomux-lin 15289 root  rtd    DIR                8,1     4096       2 /
+	iomux-lin 15289 root  txt    REG                8,1    38948  158448 /home/paas/warden/container/178l4d6v637/bin/iomux-link
+	iomux-lin 15289 root  mem    REG                8,1  1811128  795078 /lib/x86_64-linux-gnu/libc-2.15.so
+	iomux-lin 15289 root  mem    REG                8,1   135366  795080 /lib/x86_64-linux-gnu/libpthread-2.15.so
+	iomux-lin 15289 root  mem    REG                8,1   149280  795092 /lib/x86_64-linux-gnu/ld-2.15.so
+	iomux-lin 15289 root    0r  FIFO                0,8      0t0 1698252 pipe
+	iomux-lin 15289 root    1w  FIFO                0,8      0t0 1698253 pipe
+	iomux-lin 15289 root    2w  FIFO                0,8      0t0 1698254 pipe
+	iomux-lin 15289 root    3u  unix 0xffff8800237b2700      0t0 1698274 socket
+	iomux-lin 15289 root    4u  unix 0xffff88003d6923c0      0t0 1698276 socket
+	iomux-lin 15289 root    5u  unix 0xffff88003d691380      0t0 1698278 socket
+
+oom进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15194
+	COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+	oom     15194 root  cwd    DIR    8,1     4096  156481 /home/paas/build_dir/target/warden_2fd4fcd33.git/warden
+	oom     15194 root  rtd    DIR    8,1     4096       2 /
+	oom     15194 root  txt    REG    8,1    16959  156582 /home/paas/build_dir/target/warden_2fd4fcd33.git/warden/src/oom/oom
+	oom     15194 root  mem    REG    8,1  1811128  795078 /lib/x86_64-linux-gnu/libc-2.15.so
+	oom     15194 root  mem    REG    8,1   149280  795092 /lib/x86_64-linux-gnu/ld-2.15.so
+	oom     15194 root    0r  FIFO    0,8      0t0 1680292 pipe
+	oom     15194 root    1w  FIFO    0,8      0t0 1680293 pipe
+	oom     15194 root    2w  FIFO    0,8      0t0 1680294 pipe
+	oom     15194 root    3u  0000    0,9        0    4831 anon_inode
+	oom     15194 root    4r   REG   0,23        0 1680029 /tmp/warden/cgroup/memory/instance-178l4d6v637/memory.oom_control
+	oom     15194 root    5w   REG   0,23        0 1680017 /tmp/warden/cgroup/memory/instance-178l4d6v637/cgroup.event_control
+
+wshd进程打开文件情况：
+	
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15141
+	COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF    NODE NAME
+	wshd    15141 root  cwd    DIR               0,24     4096 1679954 /
+	wshd    15141 root  rtd    DIR               0,24     4096 1679954 /
+	wshd    15141 root  txt    REG                8,1   972698  158558 /sbin/wshd
+	wshd    15141 root    0u  0000                0,9        0    4831 anon_inode
+	wshd    15141 root    3u  unix 0xffff88003a7bdd40      0t0 1679949 ./run/wshd.sock
+	wshd    15141 root   11w  FIFO                0,8      0t0 1698315 pipe	
+wsh进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15283
+	COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF    NODE NAME
+	wsh     15283 root  cwd    DIR                8,1     4096  156481 /home/paas/build_dir/target/warden_2fd4fcd33.git/warden
+	wsh     15283 root  rtd    DIR                8,1     4096       2 /
+	wsh     15283 root  txt    REG                8,1   945289  158447 /home/paas/warden/container/178l4d6v637/bin/wsh
+	wsh     15283 root    1w  FIFO                0,8      0t0 1698244 pipe
+	wsh     15283 root    2w  FIFO                0,8      0t0 1698245 pipe
+	wsh     15283 root    3u  unix 0xffff88003d690000      0t0 1698310 socket
+	wsh     15283 root    5r  FIFO                0,8      0t0 1698313 pipe
+	wsh     15283 root    6r  FIFO                0,8      0t0 1698314 pipe
+	wsh     15283 root    7r  FIFO                0,8      0t0 1698315 pipe
+	
+wshd进程的子进程bash进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15292
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  cwd    DIR   0,24     4096 1680395 /home/vcap
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  rtd    DIR   0,24     4096 1679954 /
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  txt    REG    8,1   959120  810540 /bin/bash
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810263 /lib/x86_64-linux-gnu/libnss_files-2.15.so (path inode=795088)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810277 /lib/x86_64-linux-gnu/libnss_nis-2.15.so (path inode=795084)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810203 /lib/x86_64-linux-gnu/libnsl-2.15.so (path inode=795097)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810216 /lib/x86_64-linux-gnu/libnss_compat-2.15.so (path inode=795089)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810200 /lib/x86_64-linux-gnu/libc-2.15.so (path inode=795078)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810243 /lib/x86_64-linux-gnu/libdl-2.15.so (path inode=786457)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810285 /lib/x86_64-linux-gnu/libtinfo.so.5.9 (path 	inode=786531)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001  mem    REG    8,1           810142 /lib/x86_64-linux-gnu/ld-2.15.so (path inode=795092)
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001    0r  FIFO    0,8      0t0 1698312 pipe
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001    1w  FIFO    0,8      0t0 1698313 pipe
+	lsof: no pwd entry for UID 10001
+	bash    15292    10001    2w  FIFO    0,8      0t0 1698314 pipe
+	
+wshd进程的子进程bash进程的子进程startup进程打开文件情况：
+
+	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15304
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	lsof: no pwd entry for UID 10001
+	COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  cwd    DIR   0,24     4096 1680396 /home/vcap/app
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  rtd    DIR   0,24     4096 1679954 /
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  txt    REG    8,1   959120  810540 /bin/bash
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810263 /lib/x86_64-linux-gnu/libnss_files-2.15.so (path inode=795088)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810277 /lib/x86_64-linux-gnu/libnss_nis-2.15.so (path inode=795084)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810203 /lib/x86_64-linux-gnu/libnsl-2.15.so (path inode=795097)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810216 /lib/x86_64-linux-gnu/libnss_compat-2.15.so (path inode=795089)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810200 /lib/x86_64-linux-gnu/libc-2.15.so (path inode=795078)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810243 /lib/x86_64-linux-gnu/libdl-2.15.so (path inode=786457)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810285 /lib/x86_64-linux-gnu/libtinfo.so.5.9 (path inode=786531)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           810142 /lib/x86_64-linux-gnu/ld-2.15.so (path inode=795092)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           147791 /usr/lib/x86_64-linux-gnu/gconv/gconv-modules.cache (path inode=410628)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  mem    REG    8,1           802495 /usr/lib/locale/locale-archive (path inode=400796)
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001    0r  FIFO    0,8      0t0 1698312 pipe
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001    1w  FIFO    0,8      0t0 1698313 pipe
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001    2w  FIFO    0,8      0t0 1698314 pipe
+	lsof: no pwd entry for UID 10001
+	startup 15304    10001  255r   REG    8,1      510  158576 /home/vcap/startup	
+	
 未完待续...
 
 [Linux中的namespaces]: http://lsword.github.io/2013/09/20.html
