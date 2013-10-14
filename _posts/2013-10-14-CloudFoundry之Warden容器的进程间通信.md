@@ -109,7 +109,7 @@ description: 一个warden容器会涉及到一系列的进程，本文对warden�
 	                                                         ├─startup(15308)───tee(15309)
 	                                                         └─{ruby}(15312)
 
-可以看到，已经存在了一个wshd进程，其下有一系列子进程。其中bash是响应wsh的请求创建的shell进程，startup是应用的启动脚本程序，ruby(15306)是应用进程。
+可以看到，已经存在了一个wshd进程，其下有一系列子进程。其中bash是响应wsh的请求创建的shell进程，startup是应用的启动脚本程序（dea在进行应用打包时，为每个应用都生成一个startup脚本用来启动应用），ruby(15306)是应用进程。
 
 此时通过cf命令修改应用实例个数为2，再次查看warden服务进程的情况，结果如下：
 
@@ -167,4 +167,6 @@ description: 一个warden容器会涉及到一系列的进程，本文对warden�
 
 ### warden容器的进程间通信
 	
+未完待续...
+
 [Linux中的namespaces]: http://lsword.github.io/2013/09/20.html
