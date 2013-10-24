@@ -249,6 +249,7 @@ wshd进程打开文件情况：
 	wshd    15141 root    0u  0000                0,9        0    4831 anon_inode
 	wshd    15141 root    3u  unix 0xffff88003a7bdd40      0t0 1679949 ./run/wshd.sock
 	wshd    15141 root   11w  FIFO                0,8      0t0 1698315 pipe	
+	
 wsh进程打开文件情况：
 
 	paas@ubuntu:~/paas-release.git/bin$ sudo lsof -p 15283
@@ -366,6 +367,55 @@ wshd进程的子进程bash进程的子进程startup进程打开文件情况：
 	lsof: no pwd entry for UID 10001
 	startup 15304    10001  255r   REG    8,1      510  158576 /home/vcap/startup	
 	
-未完待续...
+#### wsh与wshd之间的交互	
+
+wshd在启动之初打开一个域socket并进行监听，对应wshd打开文件中下面这条记录。
+
+	wshd    15141 root    3u  unix 0xffff88003a7bdd40      0t0 1679949 ./run/wshd.sock
+	
+warden服务器需要控制warden容器进行相应操作时，通过控制wsh进程连接这个域socket并发送请求消息实现。
+	
+warden服务器通过wsh进程与wshd进行交互，有两种交互方式：
+
+	终端交互方式：当我们进入到warden容器所在目录，执行sudo bin/wsh命令接入warden容器时的交互方式。
+	非终端交互方式：当dea向warden服务器发出控制warden容器指令时的交互方式。
+
+两种交互方式处理过程请参考[CloudFoundry之Warden容器的核心进程wshd]
+
+##### 1 wsh与wshd进程之间的交互
+
+wsh进程只与wshd进程进行一次交互，交互结束后，wsh进程获得了一系列文件描述符，wshd进程fork出与wsh进程交互的子进程，并通过dup2调用将子进程的STDIN、STDOUT、STDERR文件描述符与发送给wsh进程的文件描述符进行绑定。后续的交互都是wsh进程与wshd子进程之间的交互。
+
+##### 2 wsh与wshd子进程之间的交互
+
+wsh进程收到wshd进程返回的文件描述符后，进入主循环，等待并读取wshd子进程的标准输出和标准错误输出，并可以向wshd子进程的标准输入写入数据。
+
+#### iomux_spawn与iomux_link之间的交互
+iomux_spawn在启动之初打开三个域socket并进行监听，对应iomux_spawn打开文件中下面这些记录。
+
+		iomux-spa 15282 root    3u  unix 0xffff88003a7bf400      0t0 1698241 /home/paas/warden/container/178l4d6v637/jobs/6/stdout.sock
+	iomux-spa 15282 root    4u  unix 0xffff88003a7bea40      0t0 1698242 /home/paas/warden/container/178l4d6v637/jobs/6/stderr.sock
+	iomux-spa 15282 root    5u  unix 0xffff88003a7bc000      0t0 1698243 /home/paas/warden/container/178l4d6v637/jobs/6/status.sock
+	
+iomux_link在启动后就去连接这三个域socket，并从中读取标准输出、标准错误输出和状态信息。
+
+iomux_link将从域socket中读出的标准输出、标准错误输出数据重定向到自己的标准输出和标准错误输出，即将容器中app的标准输出和标准错误输出通过iomux_link的标准输出和标准错误输出进行输出。
+
+#### iomux_spawn与wsh之间的交互
+
+iomux_spawn在启动监听后，建立三个匿名管道并fork出一个子进程来运行wsh。因此iomux_spawn与wsh是父子进程关系，通过匿名管道进行进程间通信。
+
+iomux_spawn启动4个线程，分为两组，通过管道方式读取wsh进程的标准输出和标准错误输出。
+
+iomux_spawn启动1个线程用于写入状态信息。
+
+### 总结
+
+warden中进程通信看上去比较复杂，但只要明确其实际最终目的就会清晰。
+
+在非交互模式下，涉及到iomux_link、iomux_spawn、wsh、wshd、app，最终目的是把容器中app的标准输出和标准错误输出通过iomux_link的标准输出和标准错误输出进行输出。这是最基本和最常用的交互方式。
+
+在交互模式下，涉及到wsh、wshd、app，这种情况比较简单，就是通过伪终端接入到容器内部。
 
 [Linux中的namespaces]: http://lsword.github.io/2013/09/20.html
+[CloudFoundry之Warden容器的核心进程wshd]: http://lsword.github.io/2013/09/19.html
