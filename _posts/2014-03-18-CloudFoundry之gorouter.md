@@ -2,7 +2,7 @@
 layout: post
 category: 云计算
 tags: CloudFoundry
-description: gorouter是CloudFoundry中用于处理用户请求的入口代理模块，本文主要介绍如何gorouter的主要功能和部分实现细节。
+description: gorouter是CloudFoundry中用于处理用户请求的入口代理模块，本文主要介绍gorouter的主要功能和部分实现细节。
 ---
 
 ### 主要功能
