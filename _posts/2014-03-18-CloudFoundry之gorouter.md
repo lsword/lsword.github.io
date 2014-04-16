@@ -55,7 +55,7 @@ gorouter定时对失效的应用路由信息进行清理。
 	
 ### 会话保持
 
-如果应用实例向客户端回复的响应中存在cookies，gorouter会在响应的cookies中加入应用实例的id，cookie的key值为“JSESSIONID”，如果客户端请求中的cookie中有JSESSIONID，gorouter将会取出响应的应用实例id，并找到响应应用实例所在的主机和端口，将请求转发过去。（参考proxy.go中的lookup函数和request_handler.go中的setupStickySession函数）
+如果应用实例向客户端回复的响应中存在cookies，gorouter会在响应的cookies中加入应用实例的id，cookie的key值为“JSESSIONID”，如果客户端请求中的cookie中有JSESSIONID，gorouter将会取出响应的应用实例id，并找到相应应用实例所在的主机和端口，将请求转发过去。（参考proxy.go中的lookup函数和request_handler.go中的setupStickySession函数）
 
 ### websocket
 
