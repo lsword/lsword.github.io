@@ -20,7 +20,7 @@ deaagent根据dea模块的instances.json文件获取dea的应用实例信息。�
 
 #### 实现细节
 
-##### instances.json文件监控
+##### 1. instances.json文件监控
 
 使用了fsnotify(https://github.com/howeyc/fsnotify)实现对文件的监控。
 
@@ -30,9 +30,9 @@ deaagent根据dea模块的instances.json文件获取dea的应用实例信息。�
 
 fsnotify这个go语言库还是很有用的，可以用到很多实际问题。
 
-##### 使用channel实现原子操作
+##### 2. 使用channel实现原子操作
 
-** channel定义 **
+###### channel定义
 
 ~~~
 type agent struct {
@@ -44,7 +44,7 @@ type agent struct {
 
 上面代码中的knownInstancesChan是一个函数类型的channel，这种使用channel的方式头次遇到。
 
-** channel初始化及执行 **
+###### channel初始化及执行
 
 ~~~
 knownInstancesChan := atomicCacheOperator()
@@ -63,7 +63,7 @@ func atomicCacheOperator() chan<- func(map[string]*TaskListener) {
 
 可以看到，只要channel中有函数，就会被取出并执行。
 
-** channel使用 **
+###### channel使用 
 
 ~~~
 agent.knownInstancesChan <- agent.processTasks(currentTasks, emitter)
