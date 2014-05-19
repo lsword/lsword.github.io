@@ -386,6 +386,6 @@ cat _index_images
 	
 ### 其他
 
-[官方文档]
+对image的json文件的结构需要补充。
 
 [官方文档]: http://docs.docker.io/use/working_with_links_names
