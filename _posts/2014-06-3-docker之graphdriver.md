@@ -182,15 +182,68 @@ docker初始化后，mnt目录为空。
 
 启动一个容器后，会在mnt目录中创建两个目录，容器id目录和容器id-init目录。其中容器id-init目录为空。
 
-#### 3.4 存在的问题
+##### 3.4 mount信息
 
-##### 3.4.1 容器相关设备清除问题。
+对于同一个容器来说，以下两个目录都是mount到同一个设备上的。
+
+	/var/lib/docker/devicemapper/mnt/容器id
+	/var/lib/docker/containers/容器id/root
+
+通过系统的mount命令或df命令是无法查看的，可以通过/proc/docker进程id下的mountinfo、mounts、mountstats三个文件查看设备的mount情况。
+
+#### 3.5 存在的问题
+
+##### 3.5.1 容器相关设备清除问题。
 
 在删除容器时，如果正在访问/var/lib/docker/devicemapper/mnt/容器id/rootfs或者/var/lib/docker/container/容器id/rootfs，则无法删除容器。此时，即使重启docker服务也无法删除容器，目前看来，只有重启主机才能再删除容器。
 
-##### 3.4.2 空间限制
+##### 3.5.2 空间限制
 
 data最大容量100G，单个容器最大容量10G，这个是写死在代码中的。虽然一般情况下不会达到上限，但是毕竟是个限制。
+
+### 4、aufs
+
+aufs是docker在支持aufs文件系统的Linux上运行时使用的驱动程序。实现要比devmapper简单的多。
+
+#### 4.1、初始化
+
+通过查看/proc/filesystem文件确定是否支持aufs。
+
+在/var/lib/docker/aufs目录下创建mnt、diff、layers三个目录。
+
+#### 4.2 文件说明
+
+##### 4.2.1 mnt
+
+与devmapper的mnt作用一致。
+
+##### 4.2.2 layers
+
+容器或镜像的继承层次。
+
+##### 4.2.3 diff
+
+容器或镜像的每一层与其父层不同的文件。
+
+#### 4.3 关键函数
+
+##### 4.3.1 Create
+
+在/var/lib/docker/aufs目录中的mnt和diff子目录中为容器建立相应的子目录。
+
+在/var/lib/docker/aufs目录中的layers目录中为容器建立相应的layer文件。
+
+##### 4.3.2 Get
+
+调用aufsmount函数为容器挂载文件系统。
+
+### 5、btrfs
+
+待补充
+
+### 6、vfs
+
+待补充
 
 ### 参考文档
 
