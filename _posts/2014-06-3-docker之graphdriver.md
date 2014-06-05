@@ -109,6 +109,89 @@ DeviceSet.MountDevice
 	mount /dev/mapper/设备名称 /var/lib/docker/containers/容器id/rootfs
 ~~~
 
+#### 3.3 文件说明
+
+docker使用devicemapper驱动时，/var/lib/docker目录下会存在一个devicemapper目录，包含devicemapper和mnt两个子目录。
+
+##### 3.3.1 devicemapper
+
+此目录下有三个文件，data、json、metadata。
+
+其中data、metadata就是dmsetup用到的数据文件。data容量上限为100G、metadata容量上限为2G。所有container的空间都是在data文件中分配的，container删除时会从data中回收分配的空间（测试方法：可以启动一个container，执行dd if=/dev/zero of=test bs=1M count=100命令，在container创建一个100M的文件，然后使用du命令观察data文件大小的变化。最后退出并删除container，观察data文件大小的变化）。
+
+---
+
+json文件保存data文件中的设备信息，我们可以通过查看各个阶段的json文件内容来进一步了解json文件的作用。
+
+docker初次启动时，json文件内容如下：
+
+~~~
+{"Devices":{
+	"":{"device_id":0,"size":10737418240,"transaction_id":1,"initialized":true}}}
+~~~
+
+这是因为在初始化时，需要创建一个BaseImage。
+
+---
+
+使用docker pull命令获取ubuntu/12.04镜像后，json内容如下：
+
+~~~
+{"Devices":{
+	"":{"device_id":0,"size":10737418240,"transaction_id":1,"initialized":true},
+	"511136ea3c5a64f264b78b5433614aec563103b4d4702f3ba7d4d2698e22c158":{"device_id":1,"size":10737418240,"transaction_id":2,"initialized":true},
+	"5dbd9cb5a02fb27734e3dbaef8d6abf0997c137f49dd433bf3f27c8036d3348e":{"device_id":4,"size":10737418240,"transaction_id":5,"initialized":true},
+	"74fe38d114018aac73c5997b95263090048ec9a1f58f33a1b53f55e92156d53b":{"device_id":5,"size":10737418240,"transaction_id":6,"initialized":true},
+	"82cdea7ab5b555f53c2adf8df75b0d2ad1e49dbfc11da50df3e7ea38454ed606":{"device_id":3,"size":10737418240,"transaction_id":4,"initialized":true},
+	"d0ca5d7c3fc048a9c7363d52315d829959078b4e153ef30bdf79ac6ee44c12b3":{"device_id":6,"size":10737418240,"transaction_id":7,"initialized":true},
+	"f10ebce2c0e158af1eb0dc08c9e917cc0976e7d57319defbb06ea61191d29e76":{"device_id":2,"size":10737418240,"transaction_id":3,"initialized":true}}
+}
+~~~
+
+为各层Image都创建了一个device。
+
+---
+
+使用docker run命令运行一个容器后，json内容如下：
+
+~~~
+{"Devices":{
+	"":{"device_id":0,"size":10737418240,"transaction_id":1,"initialized":true},
+	"511136ea3c5a64f264b78b5433614aec563103b4d4702f3ba7d4d2698e22c158":{"device_id":1,"size":10737418240,"transaction_id":2,"initialized":true},
+	"5dbd9cb5a02fb27734e3dbaef8d6abf0997c137f49dd433bf3f27c8036d3348e":{"device_id":4,"size":10737418240,"transaction_id":5,"initialized":true},
+	"6170362ca522d16c6f286c9cdde59a815006694c59bc578342785ccd3fd01161":{"device_id":16,"size":10737418240,"transaction_id":25,"initialized":true},
+	"6170362ca522d16c6f286c9cdde59a815006694c59bc578342785ccd3fd01161-init":{"device_id":15,"size":10737418240,"transaction_id":24,"initialized":true},
+	"74fe38d114018aac73c5997b95263090048ec9a1f58f33a1b53f55e92156d53b":{"device_id":5,"size":10737418240,"transaction_id":6,"initialized":true},
+	"82cdea7ab5b555f53c2adf8df75b0d2ad1e49dbfc11da50df3e7ea38454ed606":{"device_id":3,"size":10737418240,"transaction_id":4,"initialized":true},
+	"d0ca5d7c3fc048a9c7363d52315d829959078b4e153ef30bdf79ac6ee44c12b3":{"device_id":6,"size":10737418240,"transaction_id":7,"initialized":true},
+	"f10ebce2c0e158af1eb0dc08c9e917cc0976e7d57319defbb06ea61191d29e76":{"device_id":2,"size":10737418240,"transaction_id":3,"initialized":true}}
+}
+~~~
+
+可以看到多出了6170362ca522d16c6f286c9cdde59a815006694c59bc578342785ccd3fd01161和6170362ca522d16c6f286c9cdde59a815006694c59bc578342785ccd3fd01161-init两个设备。
+
+---
+
+删除刚才创建的容器后，容器id相关的两个设备信息在json文件中消失。
+
+##### 3.3.2 mnt
+
+docker初始化后，mnt目录为空。
+
+使用docker pull命令获取image后，会在mnt目录中为每级image创建一个空的子目录。
+
+启动一个容器后，会在mnt目录中创建两个目录，容器id目录和容器id-init目录。其中容器id-init目录为空。
+
+#### 3.4 存在的问题
+
+##### 3.4.1 容器相关设备清除问题。
+
+在删除容器时，如果正在访问/var/lib/docker/devicemapper/mnt/容器id/rootfs或者/var/lib/docker/container/容器id/rootfs，则无法删除容器。此时，即使重启docker服务也无法删除容器，目前看来，只有重启主机才能再删除容器。
+
+##### 3.4.2 空间限制
+
+data最大容量100G，单个容器最大容量10G，这个是写死在代码中的。虽然一般情况下不会达到上限，但是毕竟是个限制。
+
 ### 参考文档
 
 [device-mapper]
