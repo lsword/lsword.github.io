@@ -133,7 +133,9 @@ lxc.mount.entry = shm /var/lib/docker/containers/5c750830982f852cae616ac7408823f
 
 以下为一个典型的容器启动命令。
 
-lxc-start -n 5c750830982f852cae616ac7408823f716efcce02bf95bbbb926abb3788f30a6 -f /var/lib/docker/containers/5c750830982f852cae616ac7408823f716efcce02bf95bbbb926abb3788f30a6/config.lxc --/.dockerinit -driver lxc -g 172.17.42.1 -i 172.17.0.2/16 -mtu 1500 --bash
+lxc-start -n 5c750830982f852cae616ac7408823f716efcce02bf95bbbb926abb3788f30a6 -f /var/lib/docker/containers/5c750830982f852cae616ac7408823f716efcce02bf95bbbb926abb3788f30a6/config.lxc -- /.dockerinit -driver lxc -g 172.17.42.1 -i 172.17.0.2/16 -mtu 1500 -- bash
+
+从上面的命令可以看出是使用lxc-start启动容器，在容器中运行/.dockerinit -driver lxc -g 172.17.42.1 -i 172.17.0.2/16 -mtu 1500 -- bash命令，由.dockerinit进程启动bash进程。
 
 以下为启动一个容器后的docker进程树示例：
 
@@ -150,6 +152,8 @@ docker(2772)─┬─lxc-start(3450)───bash(3455)
              ├─{docker}(2886)
              └─{docker}(2904)
 ~~~
+
+从代码中可以看出，容器初始化工作由.dockerinit进程完成，初始化结束后，.dockerinit进程通过exec系统调用运行bash进程。
 
 #### 3.2 Kill
 
@@ -187,6 +191,8 @@ lxc-kill -n 容器id 9
 准备native容器配置文件
 启动容器
 ~~~
+
+在这种方式下，使用docker自带的libcontainer库来管理容器，关于libcontainer的详细情况请参考[Docker之libcontainer]。
 
 ##### 4.1.1 创建容器数据结构
 
@@ -310,7 +316,7 @@ type Network struct {
 
 ##### 4.1.4 启动容器
 
-待补充
+调用libcontainer库中的namespaces.Exec函数，在容器中启动.dockerinit进程，由.dockerinit进程完成初始化操作，并启动容器中的应用程序。
 
 #### 4.2 Kill
 
@@ -332,9 +338,8 @@ type Network struct {
 
 执行kill系统调用，向容器进行发送信号9。
 
-### 参考文档
 
-
+[Docker之libcontainer]: http://lsword.github.io/2014/06/16.html
 [Docker之graphdriver]: http://lsword.github.io/2014/06/03.html
 [thinprovisioned_volumes]: https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Logical_Volume_Manager_Administration/thinprovisioned_volumes.html
 [device-mapper]: http://device-mapper.com/
