@@ -467,7 +467,46 @@ Spec:
 
 ### 4 libcontainer
 
-未完待续...
+libcontainer由多个包构成，对于使用libcontainer的应用来说，最重要的包是namespaces，最重要的方法是namespaces.Init和namespace.Exec。
+
+#### 4.1 namespaces.Init
+
+dokcer中有两个可执行程序会调用namespaces.Init，一个是dockerinit-x.y.z（其中x.y.z为docker的版本号，位于/var/lib/docker/init/目录，此程序即每个容器中的.dockerinit程序），一个就是nsinit（在执行nsinit init命令时调用namespaces.Init）。
+
+namespaces.Init的作用是对容器进行初始化操作。每个容器启动后，其中执行的第一个进程就是容器中的.dockerinit进程。在使用native方式启动容器时，.dockerinit调用namespaces.Init初始化容器。
+
+namespaces.Init主要执行了以下工作：
+
+1. 加载容器环境变量
+2. setsid，即新建一个linux会话。
+3. 设置网络
+4. 设置路由
+5. 初始化容器标签
+6. 初始化mount命名空间
+7. 设置apparmor
+8. 设置命名空间
+9. 使用exec运行应用程序
+
+#### 4.2 namespaces.Exec
+
+namespaces.Exec主要执行了以下工作：
+
+1. 创建子进程（此时子进程处于阻塞状态）
+2. 为子进程设置cgroup
+3. 为子进程设置网络
+4. 运行子进程
+5. 等待子进程结束
+
+#### 4.3 namespaces.Exec与namespaces.Init的关系
+
+docker服务器使用libcontainer管理容器时，当用户通过docker客户端发出docker run命令运行容器时，处理过程是这样的：docker服务器做了已下操作：
+
+1. docker服务器创建容器
+2. docker服务器调用namespaces.Exec函数来运行.dockerinit进程
+3. .dockerinit进程中调用namespaces.Init函数来初始化容器并运行用户指定的命令
+
+即namespaces.Exec是docker服务器调用的函数，namespaces.Init是.dockerinit进程调用的函数。
+
 
 [Docker之execdriver]: http://lsword.github.io/2014/06/04.html
 [Docker之graphdriver]: http://lsword.github.io/2014/06/03.html
