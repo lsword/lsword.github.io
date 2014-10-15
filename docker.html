@@ -9,6 +9,13 @@ description: 刘剑的技术博客, 云计算技术、IOS开发、Linux...
     <span class="pull-right">最后更新时间：{{ site.time | date: "%Y年%m月%d日" }}</span>
 </div>
 
-{% include ds_recent.html %}
-
-
+{% for post in site.posts %}
+  {% if post.title contains "docker" %}
+    <div class="topic">
+        <a class="time-backgroud"></a>
+        <span class="time-meta">{{ post.date | date: "%Y年%m月%d日" }}</span>
+        <div class="title"><a href="{{ post.url }}">{{ post.title }}</a></div>
+        <p>{{ post.description }}</p>
+    </div>
+  {% endfor %}
+{% endfor %}
