@@ -10,7 +10,7 @@ description: 刘剑的技术博客, 云计算技术、IOS开发、Linux...
 </div>
 
 {% for post in site.posts %}
-  {% unless post contains "Docker" %}
+  {% if post contains "Docker" %}
     123
-  {% endunless %}
+  {% endif %}
 {% endfor %}
