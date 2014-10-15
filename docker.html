@@ -5,12 +5,13 @@ description: 刘剑的技术博客, 云计算技术、IOS开发、Linux...
 ---
 
 <div class="well">
-    <span>文章总计： {{ site.posts | size }} 篇</span>
-    <span class="pull-right">最后更新时间：{{ site.time | date: "%Y年%m月%d日" }}</span>
+  <div class="title">
+    <span>Docker详解</span>
+  </div>
 </div>
 
 {% for post in site.posts %}
-  {% if post.title contains "Docker" %}
+  {% if post.title contains "Docker详解" %}
     <div class="topic">
       <a class="time-backgroud"></a>
       <span class="time-meta">{{ post.date | date: "%Y年%m月%d日" }}</span>
