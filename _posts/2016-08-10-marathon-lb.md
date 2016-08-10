@@ -1,10 +1,9 @@
-* * *
-
+---
 layout: post
-category: marathon-lb
+category: 云计算
 tags: mesos,marathon,paas
-
-## description: 本文介绍marathon-lb的使用
+description: 本文介绍marathon-lb的使用
+---
 
 ## 一. 安装部署
 
@@ -12,13 +11,15 @@ tags: mesos,marathon,paas
 
     pull mesosphere/marathon-lb
 
-    ### 2. 使用docker命令启动
+### 2. 使用docker命令启动
 
     docker -d -e PORTS=9091 --privileged --net=host docker.io/mesosphere/marathon-lb sse --marathon http://192.168.36.111:8080 --group external
 
-    ### 3. 使用marathon启动
+### 3. 使用marathon启动
 
 *   marathon-lb.json
+
+~~~
 
     {
       "id": "marathon-lb",
@@ -54,6 +55,8 @@ tags: mesos,marathon,paas
       "env": {},
       "labels": {}
     }
+
+~~~
 
 *   curl命令
 
@@ -96,9 +99,9 @@ tags: mesos,marathon,paas
     </tbody>
     </table>
 
-    ## 二. Nginx使用marathon-lb做负载均衡
+## 二. Nginx使用marathon-lb做负载均衡
 
-    ### nginx.json
+### nginx.json
 
 ~~~
    {
@@ -127,9 +130,9 @@ tags: mesos,marathon,paas
 
     servicePort是用于服务发现的端口配置（与docker无关），marathon不使用这个参数，marathon-lb使用。这是一个可选参数，默认为0。如果设置为0，marathon会指定一个随机的数值。
 
-    ## 二. 运行机制
+## 二. 运行机制
 
-    ### 容器中进程列表
+### 容器中进程列表
 
 ~~~
 UID        PID  PPID  C STIME TTY          TIME CMD
@@ -142,7 +145,7 @@ root        45     1  0 07:30 ?        00:00:00 haproxy -p /tmp/haproxy.pid -f /
 root      1453    14  0 07:41 ?        00:00:00 sleep 0.5
 ~~~
 
-    ### marathon-lb.py
+### marathon-lb.py
 
 ~~~
     通过marathon的/v2/events接口，获取marathon中应用的部署变更事件（status_update_event、health_status_changed_event、api_post_event）。
