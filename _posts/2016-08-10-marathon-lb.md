@@ -62,7 +62,7 @@ description: 本文介绍marathon-lb的使用
 
     curl -i -H 127.00.1:8080/v2/apps -d @marathon-lb.json
 
-    ### 4. API Endpoints
+### 4. API Endpoints
 
     <table>
     <thead>
@@ -123,12 +123,12 @@ description: 本文介绍marathon-lb的使用
        }
      }
    }
-~~~
 
 
     HAPROXY_GROUP要与相应的marathon-lb的--group参数一致。
 
     servicePort是用于服务发现的端口配置（与docker无关），marathon不使用这个参数，marathon-lb使用。这是一个可选参数，默认为0。如果设置为0，marathon会指定一个随机的数值。
+~~~
 
 ## 二. 运行机制
 
